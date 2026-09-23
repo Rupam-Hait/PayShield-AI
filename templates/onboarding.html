@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}MSME Onboarding & Consent — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">MSME Enterprise Onboarding & DPDP Consent Setup</h1>
+    <p class="page-meta">Registration under MSMED Act 2006 & Digital Personal Data Protection Rules 2025</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+  <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 24px;">
+    <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px; border-bottom: 1px solid var(--color-ruled-line); padding-bottom: 8px;">1. Enterprise Credentials</h3>
+    
+    <form method="POST" action="{{ url_for('onboarding_submit') }}">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Business Name (As per PAN/GST)</label>
+          <input type="text" name="business_name" value="Apex Precision Tools Pvt Ltd" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Udyam Registration Number</label>
+          <input type="text" name="udyam_id" value="UDYAM-MH-01-0029411" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Enterprise Category</label>
+          <select name="enterprise_type">
+            <option value="Micro" selected>Micro (&le; ₹5 Cr Turnover)</option>
+            <option value="Small">Small (&le; ₹50 Cr Turnover)</option>
+            <option value="Medium">Medium (&le; ₹250 Cr Turnover)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Activity Classification</label>
+          <select name="activity_type">
+            <option value="Manufacturing" selected>Manufacturing</option>
+            <option value="Services">Services</option>
+            <option value="Trader">Trader (Retail/Wholesale)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">State & District</label>
+          <input type="text" name="location" value="Maharashtra, Pune" required>
+        </div>
+      </div>
+
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-top: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--color-ruled-line); padding-bottom: 8px;">2. DPDP Act 2025 Purpose-Specific Consent Capture</h3>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 16px;">
+        Under the Digital Personal Data Protection Act 2025, consent must be freely given, specific, informed, and unconditional. Select authorized processing purposes:
+      </p>
+
+      <div style="margin-bottom: 12px;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px;">
+          <input type="checkbox" name="consent_receivables" checked style="width: auto; margin-top: 3px;">
+          <div>
+            <strong>Receivables Delay & Survival Modeling:</strong>
+            <span style="color: var(--color-ledger-dim);">Authorize processing of invoice and payment timelines for deterministic legal clock and survival hazard analysis.</span>
+          </div>
+        </label>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px;">
+          <input type="checkbox" name="consent_cashflow" checked style="width: auto; margin-top: 3px;">
+          <div>
+            <strong>CashFlow Digital Twin Simulation:</strong>
+            <span style="color: var(--color-ledger-dim);">Authorize Monte Carlo simulation of obligations, tax dues, and liquidity runway estimations.</span>
+          </div>
+        </label>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px;">
+          <input type="checkbox" name="consent_treds" checked style="width: auto; margin-top: 3px;">
+          <div>
+            <strong>TReDS Ecosystem Onboarding Verification:</strong>
+            <span style="color: var(--color-ledger-dim);">Validate CPSE mandate and structured readiness checklist for factoring exchanges.</span>
+          </div>
+        </label>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px;">
+          <input type="checkbox" name="consent_benchmark" checked style="width: auto; margin-top: 3px;">
+          <div>
+            <strong>Privacy-Preserving Peer Benchmarking:</strong>
+            <span style="color: var(--color-ledger-dim);">Contribute anonymized transaction timings into sector cohorts (k-anonymity &ge; 5).</span>
+          </div>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">Complete Enterprise Setup & Initialize Tenant</button>
+    </form>
+  </div>
+
+  <div>
+    <div style="background: #F4F1EA; border: 1px solid var(--color-ruled-line); padding: 18px; margin-bottom: 16px;">
+      <h4 style="font-family: var(--font-serif); font-size: 14px; margin-bottom: 8px;">Udyam Verification Sandbox</h4>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 12px;">
+        External government verification is connected through the sandboxed Udyam API connector.
+      </p>
+      <span class="stamp-badge badge-demo">SANDBOX CONNECTOR</span>
+      <p style="font-size: 11px; margin-top: 8px; color: var(--color-ledger-dim);">Direct connection simulated; production credentials not required for demo evaluation.</p>
+    </div>
+
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 18px;">
+      <h4 style="font-family: var(--font-serif); font-size: 14px; margin-bottom: 8px;">Legal Guarantee Disclaimer</h4>
+      <p class="disclaimer-text">
+        PayShield AI strictly adheres to Section 15 and 16 of the MSMED Act 2006. Enterprise registration does not automatically guarantee MSEFC decree or TReDS auction bids.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

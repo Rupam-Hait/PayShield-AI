@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Buyer Network & Concentration Graph — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">Buyer Network & Concentration Topology</h1>
+    <p class="page-meta">Server-rendered NetworkX graph illustrating enterprise counterparty dependency and receivables exposure</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge badge-safe">SERVER-RENDERED SVG (NO-JS)</span>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 3fr 1fr; gap: 24px;">
+  <!-- SVG Visualization Canvas -->
+  <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--color-ruled-light); padding-bottom: 8px;">
+      <h3 style="font-family: var(--font-serif); font-size: 16px;">Receivables Graph Layout (MSME &harr; Buyer &harr; Invoices)</h3>
+      <span style="font-size: 11px; color: var(--color-ledger-dim);">Nodes sized and colored by concentration severity</span>
+    </div>
+    
+    <div style="overflow-x: auto;">
+      {{ graph_svg | safe }}
+    </div>
+
+    <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 11px; color: var(--color-ledger-dim);">
+      <span><strong style="color: #2E7D32;">&#9679; Safe (&le; 15% Share)</strong></span>
+      <span><strong style="color: #B78103;">&#9679; Watch (15% &ndash; 35% Share)</strong></span>
+      <span><strong style="color: #C62828;">&#9679; High Risk (&gt; 35% Share)</strong></span>
+    </div>
+  </div>
+
+  <!-- Concentration Breakdown Ledger -->
+  <div>
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 18px; margin-bottom: 16px;">
+      <h4 style="font-family: var(--font-serif); font-size: 16px; margin-bottom: 12px;">Concentration Risk Exposure</h4>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for b in concentration_breakdown %}
+        <div style="border-bottom: 1px solid var(--color-ruled-light); padding-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+            <strong>{{ b.canonical_name[:16] }}</strong>
+            <span class="tabular-nums font-serif">₹{{ "{:,.1f}".format(b.amount / 100000.0) }}L ({{ "{:.0f}%".format(b.share * 100) }})</span>
+          </div>
+          <!-- Server-rendered CSS progress bar -->
+          <div style="background: #E2E8F0; height: 6px; width: 100%; border-radius: 1px; overflow: hidden;">
+            <div style="background: {% if b.share > 0.35 %}#C62828{% elif b.share > 0.15 %}#B78103{% else %}#2E7D32{% endif %}; height: 100%; width: {{ (b.share * 100)|round }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Peer Sector Benchmark Box -->
+    <div style="background: #F4F1EA; border: 1px solid var(--color-ruled-line); padding: 18px;">
+      <h4 style="font-family: var(--font-serif); font-size: 14px; margin-bottom: 8px;">Sector Benchmark</h4>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 8px;">
+        {{ sector_benchmark.message if sector_benchmark.is_suppressed else 'Sector Median: 54 days · TReDS Adoption: 68.5%' }}
+      </p>
+      <div style="font-size: 10px; color: #64748B;">
+        DPDP Rules 2025: Cohort privacy strictly enforced (k &ge; 5).
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

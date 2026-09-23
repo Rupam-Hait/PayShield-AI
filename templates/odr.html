@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}ODR & MSEFC Statutory Readiness — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('odr', 'ODR & MSEFC Statutory Arbitration Readiness') }}</h1>
+    <p class="page-meta">Verification under Section 18 of the Micro, Small and Medium Enterprises Development Act 2006</p>
+  </div>
+  
+  <div>
+    <!-- Invoice Selector Form -->
+    <form method="GET" action="{{ url_for('odr_view') }}" style="display: flex; gap: 8px;">
+      <select name="invoice_id" onchange="this.form.submit()" style="width: auto;">
+        {% for inv in open_invoices %}
+        <option value="{{ inv.invoice_id }}" {% if selected_invoice and selected_invoice.invoice_id == inv.invoice_id %}selected{% endif %}>
+          {{ inv.invoice_number }} — {{ inv.buyer.canonical_name[:18] }} (₹{{ "{:,.1f}".format(inv.amount/100000.0) }}L)
+        </option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-sm">Inspect</button></noscript>
+    </form>
+  </div>
+</div>
+
+{% if odr_eval %}
+<!-- Overall Status Banner -->
+<div style="background: var(--color-paper-white); border: 2px solid {% if odr_eval.is_ready %}#1B5E20{% else %}#C62828{% endif %}; padding: 20px; margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <div>
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-ledger-dim);">Facilitation Council / ODR Gateway Status</span>
+      <h2 style="font-family: var(--font-serif); font-size: 22px; color: var(--color-ledger-ink); margin-top: 4px;">
+        Invoice: {{ odr_eval.invoice_number }} &middot; Buyer: {{ odr_eval.buyer_name }}
+      </h2>
+    </div>
+    <div>
+      <span class="stamp-badge {% if odr_eval.is_ready %}badge-ready{% else %}badge-high-risk{% endif %}" style="font-size: 14px; padding: 6px 14px;">
+        {{ odr_eval.status_badge }}
+      </span>
+    </div>
+  </div>
+
+  <div style="font-size: 13px; color: var(--color-ledger-ink); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-ruled-light);">
+    <strong>Evaluation Result:</strong> {{ odr_eval.overall_status }}
+  </div>
+</div>
+
+<!-- Statutory Claim Summary Card -->
+<div class="hero-grid">
+  <div class="hero-panel safe">
+    <div class="panel-label">Principal Claim</div>
+    <div class="panel-figure">₹{{ "{:,.2f}".format(selected_invoice.outstanding_amount) }}</div>
+    <div class="panel-subtext">Tax Invoice outstanding</div>
+  </div>
+
+  <div class="hero-panel danger">
+    <div class="panel-label">Section 16 Statutory Interest</div>
+    <div class="panel-figure" style="color: #C62828;">₹{{ "{:,.2f}".format(odr_eval.interest_info.interest_accrued) }}</div>
+    <div class="panel-subtext">{{ odr_eval.interest_info.annual_rate }}% p.a. (3x RBI Bank Rate, compounded monthly)</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Total Claimable Sum</div>
+    <div class="panel-figure">₹{{ "{:,.2f}".format(odr_eval.interest_info.total_claimable) }}</div>
+    <div class="panel-subtext">Principal + Compound Accrual</div>
+  </div>
+
+  <div class="hero-panel {% if odr_eval.days_overdue > 0 %}danger{% else %}safe{% endif %}">
+    <div class="panel-label">Default Duration</div>
+    <div class="panel-figure">{{ odr_eval.days_overdue }} Days</div>
+    <div class="panel-subtext">Statutory Deadline: <span class="tabular-nums">{{ odr_eval.statutory_due_date.strftime('%d %b %Y') }}</span></div>
+  </div>
+</div>
+
+<!-- Statutory Checklist Table -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">MSEFC Reference Statutory Prerequisites</h3>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Statutory Requirement</th>
+          <th>Status</th>
+          <th>Observed Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in odr_eval.checklist %}
+        <tr>
+          <td><strong>{{ item.item }}</strong></td>
+          <td>
+            {% if item.status == 'PASS' %}
+              <span class="stamp-badge badge-ready">&#10003; PASS</span>
+            {% else %}
+              <span class="stamp-badge badge-high-risk">&times; BLOCKED</span>
+            {% endif %}
+          </td>
+          <td style="font-size: 12px; color: var(--color-ledger-ink);">{{ item.details }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Legal Entity Disclaimer Box (Section 1 Non-negotiable requirement) -->
+<div class="statutory-notice-box">
+  <strong>Statutory Representation Guardrail:</strong>
+  <p class="disclaimer-text" style="margin-top: 4px; font-size: 12px; color: var(--color-ledger-dim);">
+    {{ odr_eval.disclaimer }}
+  </p>
+</div>
+
+<!-- Action Links -->
+<div style="display: flex; gap: 12px; margin-top: 20px;">
+  <a href="{{ url_for('evidence_dossier', invoice_id=odr_eval.invoice_id) }}" class="btn btn-primary">Generate MSEFC Evidence Dossier</a>
+  <a href="{{ url_for('invoice_detail', invoice_id=odr_eval.invoice_id) }}" class="btn">Return to Invoice Intelligence</a>
+</div>
+{% endif %}
+{% endblock %}

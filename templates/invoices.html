@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice Register — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('invoices', 'Commercial Invoice Register') }}</h1>
+    <p class="page-meta">Canonical ledger of issued bills, contractual due dates, and statutory payment clocks</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge badge-safe">SORTED: RISK &times; IMPACT</span>
+  </div>
+</div>
+
+<!-- Upload & Ingestion Panel -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 18px 24px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 16px; margin-bottom: 8px;">Ingest New Invoice / Document (OCR Intelligence)</h3>
+  <form method="POST" action="{{ url_for('upload_document') }}" enctype="multipart/form-data" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Select File (PDF, PNG, JPG, or CSV)</label>
+      <input type="file" name="file" required style="padding: 5px;">
+    </div>
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Document Type</label>
+      <select name="doc_type">
+        <option value="INVOICE">Commercial Invoice</option>
+        <option value="PO">Purchase Order (PO)</option>
+        <option value="GRN">Goods Receipt Note (GRN)</option>
+        <option value="E_WAY_BILL">E-Way Bill</option>
+      </select>
+    </div>
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Link to Buyer</label>
+      <select name="buyer_id">
+        {% for b in buyers %}
+        <option value="{{ b.buyer_id }}">{{ b.canonical_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button type="submit" class="btn btn-primary">Process & Validate</button>
+    </div>
+  </form>
+</div>
+
+<!-- Ruled Invoice Register Table -->
+<div class="ledger-table-wrap">
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Invoice No</th>
+        <th>Buyer</th>
+        <th>Invoice Date</th>
+        <th>Contract Due</th>
+        <th>Statutory Due (Sec 15)</th>
+        <th class="numeric">Amount</th>
+        <th class="numeric">Outstanding</th>
+        <th>Delay Prob (ML)</th>
+        <th>Confidence</th>
+        <th>Integrity</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in invoice_rows %}
+      <tr>
+        <td>
+          <a href="{{ url_for('invoice_detail', invoice_id=item.invoice.invoice_id) }}" style="font-weight: 700; color: var(--color-institutional); text-decoration: none;">
+            {{ item.invoice.invoice_number }}
+          </a>
+        </td>
+        <td>
+          <div>{{ item.invoice.buyer.canonical_name }}</div>
+          {% if item.invoice.buyer.is_cpse %}<span style="font-size: 10px; color: #1B5E20;">CPSE Mandatory TReDS</span>{% endif %}
+        </td>
+        <td class="tabular-nums">{{ item.invoice.invoice_date.strftime('%d %b %Y') }}</td>
+        <td class="tabular-nums">{{ item.invoice.contract_due_date.strftime('%d %b %Y') }}</td>
+        <td class="tabular-nums">
+          {{ item.invoice.statutory_due_date.strftime('%d %b %Y') }}
+          {% if item.days_overdue > 0 %}
+            <span style="color: #C62828; font-size: 11px; display: block;">+{{ item.days_overdue }}d overdue</span>
+          {% endif %}
+        </td>
+        <td class="numeric">₹{{ "{:,.2f}".format(item.invoice.amount) }}</td>
+        <td class="numeric"><strong>₹{{ "{:,.2f}".format(item.invoice.outstanding_amount) }}</strong></td>
+        <td>
+          {% if item.prediction.is_abstained %}
+            <span class="stamp-badge badge-insufficient">ABSTAINED</span>
+          {% else %}
+            <span class="tabular-nums">{{ "{:.0f}%".format(item.prediction.delay_probability * 100) }}</span>
+            <span class="stamp-badge {% if item.prediction.delay_probability > 0.6 %}badge-high-risk{% elif item.prediction.delay_probability > 0.3 %}badge-watch{% else %}badge-safe{% endif %}">
+              {% if item.prediction.delay_probability > 0.6 %}HIGH RISK{% elif item.prediction.delay_probability > 0.3 %}WATCH{% else %}SAFE{% endif %}
+            </span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="stamp-badge {% if item.prediction.confidence == 'HIGH' %}badge-safe{% elif item.prediction.confidence == 'MEDIUM' %}badge-watch{% else %}badge-insufficient{% endif %}">
+            {{ item.prediction.confidence }}
+          </span>
+        </td>
+        <td>
+          {% if item.anomalies %}
+            <span class="stamp-badge badge-high-risk" title="{{ item.anomalies[0].evidence }}">&times; POTENTIAL ISSUE</span>
+          {% else %}
+            <span class="stamp-badge badge-ready">&#10003; 3-WAY MATCH</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('invoice_detail', invoice_id=item.invoice.invoice_id) }}" class="btn btn-sm">Inspect &rarr;</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Rescue & What-If Simulator — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('rescue', 'Rescue & What-If Scenario Simulator') }}</h1>
+    <p class="page-meta">Dynamic stress-testing engine — Every parameter change triggers full server-side recalculation</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge badge-demo">SERVER-SIDE RECALCULATION (NO-JS)</span>
+  </div>
+</div>
+
+<!-- Interactive Scenario Control Form (Pure HTML Form POST) -->
+<div style="background: var(--color-paper-white); border: 2px solid var(--color-institutional); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 16px; margin-bottom: 12px;">Configure Stress Parameters</h3>
+  
+  <form method="POST" action="{{ url_for('run_simulation') }}" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Hypothetically Delayed Counterparty</label>
+      <select name="buyer_id">
+        {% for b in all_buyers %}
+        <option value="{{ b.buyer_id }}" {% if sim_result.delayed_buyer and sim_result.delayed_buyer.buyer_id == b.buyer_id %}selected{% endif %}>
+          {{ b.canonical_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Additional Delay</label>
+      <select name="extra_delay_days">
+        <option value="15" {% if sim_result.extra_delay_days == 15 %}selected{% endif %}>+15 Days Late</option>
+        <option value="30" {% if sim_result.extra_delay_days == 30 %}selected{% endif %}>+30 Days Late</option>
+        <option value="45" {% if sim_result.extra_delay_days == 45 %}selected{% endif %}>+45 Days Late</option>
+        <option value="60" {% if sim_result.extra_delay_days == 60 %}selected{% endif %}>+60 Days (Default Risk)</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Starting Cash (₹)</label>
+      <input type="number" name="starting_cash" value="{{ sim_result.baseline.starting_cash|round }}" step="50000">
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Safety Floor (₹)</label>
+      <input type="number" name="safety_threshold" value="{{ sim_result.baseline.safety_threshold|round }}" step="50000">
+    </div>
+
+    <div>
+      <button type="submit" class="btn btn-primary" style="height: 36px;">Run Simulation</button>
+    </div>
+  </form>
+</div>
+
+<!-- Side-by-Side Comparison: Baseline vs Stressed Scenario -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+  <!-- Column 1: Baseline State -->
+  <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-ruled-light); padding-bottom: 8px; margin-bottom: 16px;">
+      <h3 style="font-family: var(--font-serif); font-size: 16px;">1. Baseline Reality</h3>
+      <span class="stamp-badge badge-safe">CURRENT OBSERVED</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+      <div>
+        <div class="panel-label">Cash Survival Date</div>
+        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700;">
+          {{ sim_result.baseline.cash_survival_date.strftime('%d %b %Y') if sim_result.baseline.cash_survival_date else '> 70 Days' }}
+        </div>
+        <div style="font-size: 11px; color: var(--color-ledger-dim);">Day {{ sim_result.baseline.cash_survival_days or '>70' }}</div>
+      </div>
+      <div>
+        <div class="panel-label">Liquidity Deficit Floor</div>
+        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #1B2430;">
+          ₹{{ "{:,.1f}".format(sim_result.baseline.min_expected_balance / 100000.0) }}L
+        </div>
+        <div style="font-size: 11px; color: var(--color-ledger-dim);">Minimum projected cash</div>
+      </div>
+    </div>
+
+    <div style="font-size: 12px; color: var(--color-ledger-dim);">
+      Status: <strong>{{ sim_result.baseline.liquidity_gap_text }}</strong>
+    </div>
+  </div>
+
+  <!-- Column 2: Stressed Outcome -->
+  <div style="background: var(--color-paper-white); border: 2px solid {% if sim_result.stressed.status_badge == 'HIGH RISK' %}#C62828{% else %}#B78103{% endif %}; padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-ruled-light); padding-bottom: 8px; margin-bottom: 16px;">
+      <h3 style="font-family: var(--font-serif); font-size: 16px;">2. Recalculated Stress Outcome</h3>
+      <span class="stamp-badge {% if sim_result.stressed.status_badge == 'HIGH RISK' %}badge-high-risk{% else %}badge-watch{% endif %}">
+        {{ sim_result.extra_delay_days }}D DELAY APPLIED
+      </span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+      <div>
+        <div class="panel-label">Recalculated Survival Date</div>
+        <div style="font-family: var(--font-serif); font-size: 22px; font-weight: 700; color: #C62828;">
+          {{ sim_result.stressed.cash_survival_date.strftime('%d %b %Y') if sim_result.stressed.cash_survival_date else '> 70 Days' }}
+        </div>
+        <div style="font-size: 11px; color: #C62828;"><strong>{{ sim_result.days_lost }} Days Lost</strong> in runway</div>
+      </div>
+      <div>
+        <div class="panel-label">Stress Liquidity Gap</div>
+        <div style="font-family: var(--font-serif); font-size: 20px; font-weight: 700; color: #C62828;">
+          {{ sim_result.stressed.liquidity_gap_text.split('—')[0] }}
+        </div>
+        <div style="font-size: 11px; color: #C62828;">Delta Shock: -₹{{ sim_result.liquidity_impact_lakhs }}L</div>
+      </div>
+    </div>
+
+    <div style="font-size: 12px; color: var(--color-ledger-dim);">
+      Simulated Counterparty: <strong>{{ sim_result.delayed_buyer.canonical_name if sim_result.delayed_buyer else 'Selected Buyer' }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Recommended Action Plan Triggered by Scenario -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 12px;">Dynamic Mitigation Interventions</h3>
+  <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 16px;">
+    System-generated operational actions triggered by the simulated cash shortage:
+  </p>
+
+  <ul style="padding-left: 20px; font-size: 13px; line-height: 1.8;">
+    {% for item in sim_result.recommended_mitigation %}
+    <li>{{ item }}</li>
+    {% endfor %}
+  </ul>
+
+  <div style="margin-top: 16px;">
+    <a href="{{ url_for('actions_view') }}" class="btn btn-primary">Go to Collection War Room to Authorize Interventions &rarr;</a>
+  </div>
+</div>
+
+<p class="disclaimer-text" style="margin-top: 16px;">
+  {{ sim_result.label }}
+</p>
+{% endblock %}

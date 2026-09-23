@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="{{ active_lang or 'en' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PayShield AI — Receivables Intelligence for Indian MSMEs{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ledger.css') }}">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="ledger-header">
+    <div class="header-top">
+      <div class="brand-section">
+        <a href="{{ url_for('dashboard') }}" class="brand-title">{{ t('brand', 'PayShield AI') }}</a>
+        <span class="brand-subtitle">{{ t('subtitle', 'Receivables & Cash-Flow Intelligence') }}</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <!-- Multilingual Language Selector (Pure HTML Form, No JS) -->
+        <form method="POST" action="{{ url_for('set_language') }}" style="display: inline-block;">
+          <input type="hidden" name="return_url" value="{{ request.path }}">
+          <select name="lang" onchange="this.form.submit()" style="padding: 2px 6px; font-size: 11px; width: auto; background: #2E4057; color: #FFF; border-color: #64748B;">
+            <option value="en" {% if active_lang == 'en' %}selected{% endif %}>English (EN)</option>
+            <option value="hi" {% if active_lang == 'hi' %}selected{% endif %}>हिन्दी (HI)</option>
+            <option value="bn" {% if active_lang == 'bn' %}selected{% endif %}>বাংলা (BN)</option>
+            <option value="ta" {% if active_lang == 'ta' %}selected{% endif %}>தமிழ் (TA)</option>
+            <option value="te" {% if active_lang == 'te' %}selected{% endif %}>తెలుగు (TE)</option>
+            <option value="mr" {% if active_lang == 'mr' %}selected{% endif %}>मराठी (MR)</option>
+          </select>
+          <noscript><button type="submit" class="btn btn-sm">Set</button></noscript>
+        </form>
+
+        {% if current_tenant %}
+        <div class="tenant-badge">
+          <strong>{{ current_tenant.business_name }}</strong> · <span class="tabular-nums">{{ current_tenant.udyam_id }}</span>
+        </div>
+        <a href="{{ url_for('logout') }}" style="color: #CBD5E1; font-size: 11px; text-decoration: none;">Sign Out</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Navigation Strip -->
+    <nav class="nav-strip">
+      <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">{{ t('dashboard', 'Dashboard') }}</a>
+      <a href="{{ url_for('invoices_list') }}" class="nav-link {% if request.endpoint in ['invoices_list', 'invoice_detail'] %}active{% endif %}">{{ t('invoices', 'Invoices') }}</a>
+      <a href="{{ url_for('buyer_dna_view') }}" class="nav-link {% if request.endpoint == 'buyer_dna_view' %}active{% endif %}">{{ t('buyer_dna', 'Buyer DNA') }}</a>
+      <a href="{{ url_for('buyer_graph_view') }}" class="nav-link {% if request.endpoint == 'buyer_graph_view' %}active{% endif %}">Network Graph</a>
+      <a href="{{ url_for('cashflow_view') }}" class="nav-link {% if request.endpoint == 'cashflow_view' %}active{% endif %}">{{ t('cashflow', 'CashFlow Twin') }}</a>
+      <a href="{{ url_for('simulator_view') }}" class="nav-link {% if request.endpoint == 'simulator_view' %}active{% endif %}">{{ t('rescue', 'Rescue Simulator') }}</a>
+      <a href="{{ url_for('actions_view') }}" class="nav-link {% if request.endpoint == 'actions_view' %}active{% endif %}">{{ t('actions', 'Action War Room') }}</a>
+      <a href="{{ url_for('treds_view') }}" class="nav-link {% if request.endpoint == 'treds_view' %}active{% endif %}">{{ t('treds', 'TReDS') }}</a>
+      <a href="{{ url_for('odr_view') }}" class="nav-link {% if request.endpoint == 'odr_view' %}active{% endif %}">{{ t('odr', 'ODR / Legal') }}</a>
+      <a href="{{ url_for('assistant_view') }}" class="nav-link {% if request.endpoint == 'assistant_view' %}active{% endif %}">AI Assistant</a>
+      <a href="{{ url_for('privacy_view') }}" class="nav-link {% if request.endpoint == 'privacy_view' %}active{% endif %}">{{ t('governance', 'Privacy & Consent') }}</a>
+      <a href="{{ url_for('model_health_view') }}" class="nav-link {% if request.endpoint == 'model_health_view' %}active{% endif %}">{{ t('model_health', 'Model Health') }}</a>
+      <a href="{{ url_for('learning_view') }}" class="nav-link {% if request.endpoint == 'learning_view' %}active{% endif %}">Learning Loop</a>
+      <a href="{{ url_for('rules_view') }}" class="nav-link {% if request.endpoint == 'rules_view' %}active{% endif %}">{{ t('rules', 'Rule Engine') }}</a>
+      <a href="{{ url_for('data_health_view') }}" class="nav-link {% if request.endpoint == 'data_health_view' %}active{% endif %}">Data Health</a>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="ledger-container">
+    <!-- Flash Notifications -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <!-- Footer Disclaimers -->
+    <footer style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--color-ruled-line); text-align: center; font-size: 11px; color: var(--color-ledger-dim);">
+      <p>{{ t('disclaimer_legal', 'PayShield AI is an evidence-backed intelligence system and does not constitute a legal authority, law firm, or financial intermediary.') }}</p>
+      <p style="margin-top: 4px;">Strictly server-rendered · Zero client-side JavaScript · DPDP Act 2025 Compliant · MSMED Act 2006 Statutory Engine</p>
+    </footer>
+  </main>
+</body>
+</html>

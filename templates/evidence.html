@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Evidence Dossier: {{ dossier.invoice_number }} — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('evidence', 'Cryptographic Evidence Dossier') }}</h1>
+    <p class="page-meta">Dossier ID: <span class="tabular-nums">{{ dossier.dossier_id }}</span> · Assembled: <span class="tabular-nums">{{ dossier.generated_at }}</span></p>
+  </div>
+  
+  <div style="display: flex; gap: 8px;">
+    <!-- Download Manifest Button (Form POST, Pure HTML) -->
+    <form method="POST" action="{{ url_for('download_evidence_pack', invoice_id=dossier.invoice_id) }}">
+      <button type="submit" class="btn btn-primary">Download Verifiable Evidence Bundle (.JSON)</button>
+    </form>
+    <a href="{{ url_for('invoice_detail', invoice_id=dossier.invoice_id) }}" class="btn">Return</a>
+  </div>
+</div>
+
+<!-- Master Manifest Integrity Card -->
+<div style="background: var(--color-paper-white); border: 2px solid var(--color-institutional); padding: 20px; margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; border-bottom: 1px solid var(--color-ruled-light); padding-bottom: 8px;">
+    <h3 style="font-family: var(--font-serif); font-size: 18px;">Master Cryptographic Seal (SHA-256)</h3>
+    <span class="stamp-badge badge-ready">&#10003; INTEGRITY VERIFIED</span>
+  </div>
+
+  <div style="background: #F4F1EA; padding: 12px; font-family: monospace; font-size: 13px; word-break: break-all; border: 1px solid var(--color-ruled-line); margin-bottom: 12px;">
+    {{ dossier.master_manifest_hash }}
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; font-size: 12px; margin-top: 12px;">
+    <div><strong>MSME Supplier:</strong> <div>{{ dossier.supplier_name }}</div></div>
+    <div><strong>Udyam Number:</strong> <div class="tabular-nums">{{ dossier.supplier_udyam }}</div></div>
+    <div><strong>Buyer Counterparty:</strong> <div>{{ dossier.buyer_name }}</div></div>
+    <div><strong>GSTIN:</strong> <div class="tabular-nums">{{ dossier.buyer_gstin }}</div></div>
+  </div>
+</div>
+
+<!-- Itemized Evidence Register Table -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">Itemized Evidence Records with Cryptographic Hashes</h3>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Item ID</th>
+          <th>Evidence Category</th>
+          <th>Description & Legal Reference</th>
+          <th>Source of Origin</th>
+          <th>Timestamp (UTC)</th>
+          <th>SHA-256 Checksum</th>
+          <th>Verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in dossier['items'] %}
+        <tr>
+          <td><strong style="font-family: monospace;">{{ item.item_id }}</strong></td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.description }}</td>
+          <td style="font-size: 12px; color: var(--color-ledger-dim);">{{ item.source }}</td>
+          <td class="tabular-nums" style="font-size: 11px;">{{ item.timestamp }}</td>
+          <td>
+            <code style="font-size: 10px; background: #ECEFF1; padding: 2px 4px;">{{ item.sha256_hash[:16] }}...</code>
+          </td>
+          <td>
+            <span class="stamp-badge badge-ready">{{ item.status }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="statutory-notice-box">
+  <strong>Provenance Notice:</strong>
+  <p class="disclaimer-text" style="margin-top: 4px; font-size: 12px; color: var(--color-ledger-dim);">
+    {{ dossier.disclaimer }}
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — PayShield AI{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto; background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 32px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+  <div style="border-bottom: 2px solid var(--color-institutional); padding-bottom: 12px; margin-bottom: 20px;">
+    <h2 style="font-family: var(--font-serif); font-size: 22px; color: var(--color-ledger-ink);">Enterprise Authentication</h2>
+    <p style="font-size: 12px; color: var(--color-ledger-dim);">Indian MSME System of Record & Receivables Intelligence</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('login') }}">
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Email Address</label>
+      <input type="text" name="email" value="admin@apexprecision.in" required>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px;">Password</label>
+      <input type="password" name="password" value="admin123" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--color-ruled-line);">
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <button type="submit" class="btn btn-primary" style="width: 100%;">Authenticate & Enter Ledger</button>
+    </div>
+  </form>
+
+  <div style="border-top: 1px solid var(--color-ruled-light); padding-top: 16px; margin-top: 20px; font-size: 12px;">
+    <p style="font-weight: 600; margin-bottom: 8px;">Demo Persona Quick-Access:</p>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <form method="POST" action="{{ url_for('login_as') }}">
+        <input type="hidden" name="email" value="admin@apexprecision.in">
+        <button type="submit" class="btn btn-sm">Proprietor (Vikram)</button>
+      </form>
+      <form method="POST" action="{{ url_for('login_as') }}">
+        <input type="hidden" name="email" value="neha@apexprecision.in">
+        <button type="submit" class="btn btn-sm">CFO (Neha Shenoy)</button>
+      </form>
+    </div>
+  </div>
+
+  <div style="margin-top: 24px; text-align: center;">
+    <a href="{{ url_for('onboarding') }}" style="font-size: 12px; color: var(--color-institutional); text-decoration: none;">New MSME Registration & Consent Setup &rarr;</a>
+  </div>
+</div>
+{% endblock %}

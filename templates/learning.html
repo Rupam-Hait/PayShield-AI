@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Intervention Learning Loop — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">Intervention Learning Loop &amp; Outcome Register</h1>
+    <p class="page-meta">Closed-loop feedback comparing predicted delays against actual settlement outcomes to evaluate policy effectiveness</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge badge-safe">CONTINUOUS EVALUATION</span>
+  </div>
+</div>
+
+<div class="ledger-table-wrap">
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Action Type</th>
+        <th>Invoice</th>
+        <th>Buyer</th>
+        <th class="numeric">Value</th>
+        <th>Predicted Delay</th>
+        <th>Actual Recorded Outcome</th>
+        <th>Days to Result</th>
+        <th class="numeric">Amount Recovered</th>
+        <th>Execution Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in learning_records %}
+      <tr>
+        <td><strong>{{ item.action_type }}</strong></td>
+        <td>{{ item.invoice_number }}</td>
+        <td>{{ item.buyer_name }}</td>
+        <td class="numeric font-serif">₹{{ "{:,.2f}".format(item.invoice_amount) }}</td>
+        <td>+{{ item.predicted_delay_days }} Days</td>
+        <td>
+          <span class="stamp-badge {% if item.actual_outcome == 'PAYMENT_RECEIVED' %}badge-ready{% elif item.actual_outcome == 'PROMISE_TO_PAY' %}badge-watch{% else %}badge-pending{% endif %}">
+            {{ item.actual_outcome }}
+          </span>
+        </td>
+        <td>{{ item.days_to_outcome }}d</td>
+        <td class="numeric font-serif" style="color: #1B5E20;">
+          <strong>₹{{ "{:,.2f}".format(item.amount_recovered) }}</strong>
+        </td>
+        <td>
+          <span class="stamp-badge badge-safe">{{ item.status }}</span>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" style="text-align: center; color: var(--color-ledger-dim);">No action outcomes logged yet. Execute actions in the Collection War Room to populate learning metrics.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="statutory-notice-box">
+  <strong>Methodology Statement:</strong>
+  <span>In accordance with Section 10 guardrails, Phase-1 action recommendations remain deterministic and rule-based until sufficient empirical outcome samples are accumulated to substantiate causal reinforcement learning.</span>
+</div>
+{% endblock %}

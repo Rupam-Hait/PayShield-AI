@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Regulatory Rules Engine — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('rules', 'Regulatory Rules Engine & Versioned Legal Constants') }}</h1>
+    <p class="page-meta">Statutory limits and interest multipliers governed by versioned database entities (Never hard-coded literals)</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge badge-safe">VERSIONED REPOSITORY</span>
+  </div>
+</div>
+
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">Active Statutory Rule Versions</h3>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Rule Identifier</th>
+          <th>Version</th>
+          <th>Effective Period</th>
+          <th>Parameter Value</th>
+          <th>Statutory Source</th>
+          <th>Legal Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rules %}
+        <tr>
+          <td><strong style="font-family: monospace;">{{ r.rule_name }}</strong></td>
+          <td>{{ r.version }}</td>
+          <td class="tabular-nums">{{ r.effective_from.strftime('%d %b %Y') }} &ndash; {{ r.effective_to.strftime('%d %b %Y') if r.effective_to else 'Active' }}</td>
+          <td class="font-serif font-bold">
+            {% if r.unit == 'DAYS' %}
+              {{ r.numeric_value|round|int }} Days
+            {% elif r.unit == 'MULTIPLIER' %}
+              {{ r.numeric_value }}x
+            {% elif r.unit == 'PERCENT_PER_ANNUM' %}
+              {{ r.numeric_value }}% p.a.
+            {% else %}
+              {{ r.numeric_value }}
+            {% endif %}
+          </td>
+          <td style="font-size: 12px; color: var(--color-ledger-dim);">{{ r.source }}</td>
+          <td style="font-size: 12px;">{{ r.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Rule Version Update Form (Demonstrating Versioned Updates without mutating historical records) -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 8px;">Update Regulatory Parameter (e.g. RBI Bank Rate Notification)</h3>
+  <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 16px;">
+    Creating a new rule version archives the previous rule with an effective_to date, ensuring deterministic legal integrity for historical claims.
+  </p>
+
+  <form method="POST" action="{{ url_for('update_rule_version') }}" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">Rule to Update</label>
+      <select name="rule_name">
+        <option value="RBI_BANK_RATE_CURRENT">RBI Bank Rate Notification (Sec 16)</option>
+        <option value="MSMED_ACT_SECTION_15_OUTER_LIMIT">MSMED Act Section 15 Outer Limit (Days)</option>
+        <option value="MSMED_ACT_DEEMED_ACCEPTANCE_DAYS">Deemed Acceptance Window (Days)</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">New Numerical Value</label>
+      <input type="number" step="0.01" name="numeric_value" value="6.75" required>
+    </div>
+
+    <div>
+      <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 4px;">New Version Code</label>
+      <input type="text" name="version" value="2026.2" required>
+    </div>
+
+    <div>
+      <button type="submit" class="btn btn-primary">Deploy New Version</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

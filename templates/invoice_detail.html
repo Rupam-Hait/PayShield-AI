@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice Intelligence: {{ invoice.invoice_number }} — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">Invoice Intelligence: <span class="tabular-nums">{{ invoice.invoice_number }}</span></h1>
+    <p class="page-meta">Buyer: <strong>{{ invoice.buyer.canonical_name }}</strong> · Issued: <span class="tabular-nums">{{ invoice.invoice_date.strftime('%d %B %Y') }}</span></p>
+  </div>
+  
+  <div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('evidence_dossier', invoice_id=invoice.invoice_id) }}" class="btn btn-sm btn-primary">View Evidence Dossier</a>
+    <a href="{{ url_for('simulator_view', preselect_buyer=invoice.buyer_id) }}" class="btn btn-sm">Run Rescue Simulation</a>
+    <a href="{{ url_for('treds_view', invoice_id=invoice.invoice_id) }}" class="btn btn-sm">TReDS Checklist</a>
+    <a href="{{ url_for('odr_view', invoice_id=invoice.invoice_id) }}" class="btn btn-sm">ODR Readiness</a>
+  </div>
+</div>
+
+<!-- Header Key Metrics Strip -->
+<div class="hero-grid">
+  <div class="hero-panel safe">
+    <div class="panel-label">Invoice Value &amp; Balance</div>
+    <div class="panel-figure">₹{{ "{:,.2f}".format(invoice.outstanding_amount) }}</div>
+    <div class="panel-subtext">Original: ₹{{ "{:,.2f}".format(invoice.amount) }} · Term: <span class="tabular-nums">{{ invoice.agreed_term_days }}</span> Days</div>
+  </div>
+
+  <div class="hero-panel {% if prediction.is_abstained %}warning{% elif prediction.delay_probability > 0.6 %}danger{% else %}safe{% endif %}">
+    <div class="panel-label">Payment Delay Risk</div>
+    <div class="panel-figure">
+      {% if prediction.is_abstained %}
+        Abstained
+      {% else %}
+        {{ "{:.0f}%".format(prediction.delay_probability * 100) }}
+      {% endif %}
+    </div>
+    <div class="panel-subtext">Confidence: <strong>{{ prediction.confidence }}</strong> ({{ "{:.0f}%".format(prediction.confidence_score * 100) }})</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Expected Settlement Window</div>
+    <div class="panel-figure" style="font-size: 20px; line-height: 1.3;">
+      {{ prediction.p10_payment_date.strftime('%d %b') if prediction.p10_payment_date else '—' }} &ndash; {{ prediction.p90_payment_date.strftime('%d %b %Y') if prediction.p90_payment_date else '—' }}
+    </div>
+    <div class="panel-subtext">Median P50: <strong>{{ prediction.p50_payment_date.strftime('%d %b %Y') if prediction.p50_payment_date else '—' }}</strong> (+{{ prediction.expected_delay_days }}d delay)</div>
+  </div>
+
+  <div class="hero-panel {% if clock.days_overdue_statutory > 0 %}danger{% else %}safe{% endif %}">
+    <div class="panel-label">Legal Clock Status (Sec 15)</div>
+    <div class="panel-figure" style="font-size: 20px; line-height: 1.3;">
+      {% if clock.days_overdue_statutory > 0 %}
+        Day {{ clock.days_overdue_statutory }} Default
+      {% else %}
+        Day {{ clock.days_since_invoice }} / 45
+      {% endif %}
+    </div>
+    <div class="panel-subtext">Statutory Due: <span class="tabular-nums">{{ clock.statutory_due_date.strftime('%d %b %Y') }}</span></div>
+  </div>
+</div>
+
+<!-- Abstention Notification if triggered -->
+{% if prediction.is_abstained %}
+<div class="statutory-notice-box" style="border-left-color: #78909C; background: #ECEFF1;">
+  <strong>Model Abstention Activated:</strong>
+  <span>{{ prediction.abstention_reason }} The system abstains from generating a synthetic score and relies on conservative cohort priors.</span>
+</div>
+{% endif %}
+
+<!-- Two-Column Layout: Explainability & Document Verification -->
+<div style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px; margin-top: 24px;">
+  <!-- Column 1: Why the Model Says This (SHAP Prediction Drivers) -->
+  <div>
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 8px;">Why the Model Formed This Estimate</h3>
+      <p style="font-size: 11px; color: var(--color-ledger-dim); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 16px;">
+        Ranked Prediction Drivers (TreeSHAP Feature Attributions) — Non-Causal Factors
+      </p>
+
+      <div class="ledger-table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Prediction Driver</th>
+              <th>Impact</th>
+              <th>Direction</th>
+              <th>Observed Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in drivers %}
+            <tr>
+              <td><strong>{{ d.feature }}</strong></td>
+              <td>
+                <span class="stamp-badge {% if d.impact == 'HIGH' %}badge-high-risk{% else %}badge-watch{% endif %}">
+                  {{ d.impact }}
+                </span>
+              </td>
+              <td>
+                {% if d.direction == 'INCREASES_DELAY' %}
+                  <span style="color: #C62828;">&uarr; Increases Delay</span>
+                {% else %}
+                  <span style="color: #2E7D32;">&darr; Reduces Delay</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 12px; color: var(--color-ledger-dim);">{{ d.evidence }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--color-ledger-dim);">Baseline prior active. No individual driver deviations.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="font-size: 11px; color: var(--color-ledger-dim); margin-top: 8px;">
+        <em>Notice: Drivers represent statistical model weights derived from consented data. Documentation mismatches are potential reconciliation blockers, not auto-declared legal causes of delay.</em>
+      </div>
+    </div>
+
+    <!-- Statutory Interest Accrual Card (Section 16) -->
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 8px;">Section 16 Statutory Interest Ledger</h3>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 16px;">
+        Mandatory compound interest at 3x RBI Bank Rate with monthly rests under MSMED Act 2006.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div style="background: #F8F9FA; padding: 12px; border: 1px solid var(--color-ruled-light);">
+          <div class="panel-label">Current Bank Rate</div>
+          <div style="font-family: var(--font-serif); font-size: 18px; font-weight: 700;">{{ clock.rbi_bank_rate }}% p.a.</div>
+        </div>
+        <div style="background: #F8F9FA; padding: 12px; border: 1px solid var(--color-ruled-light);">
+          <div class="panel-label">Statutory Rate (3x)</div>
+          <div style="font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: #C62828;">{{ clock.statutory_interest_rate_pa }}% p.a.</div>
+        </div>
+        <div style="background: #F8F9FA; padding: 12px; border: 1px solid var(--color-ruled-light);">
+          <div class="panel-label">Accrued Compound Interest</div>
+          <div style="font-family: var(--font-serif); font-size: 18px; font-weight: 700; color: #C62828;">₹{{ "{:,.2f}".format(interest_info.interest_accrued) }}</div>
+        </div>
+      </div>
+      <div style="font-size: 12px;">
+        Total Statutory Claim Amount (Principal + Interest): <strong>₹{{ "{:,.2f}".format(interest_info.total_claimable) }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 2: 3-Way Document Match & Canonical Timeline -->
+  <div>
+    <!-- Document Status Card -->
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 12px;">3-Way Document Integrity Match</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="checklist-item">
+          <span>Purchase Order (PO): <strong>{{ invoice.po_number or 'Missing PO' }}</strong></span>
+          {% if invoice.po_number %}<span class="checklist-status-pass">&#10003; VERIFIED</span>{% else %}<span class="checklist-status-fail">&times; MISSING</span>{% endif %}
+        </div>
+        <div class="checklist-item">
+          <span>Delivery Challan / Consignment: <strong>{{ invoice.delivery_date or 'No POD' }}</strong></span>
+          {% if invoice.delivery_date %}<span class="checklist-status-pass">&#10003; RECORDED</span>{% else %}<span class="checklist-status-fail">&times; PENDING</span>{% endif %}
+        </div>
+        <div class="checklist-item">
+          <span>Goods Receipt Note (GRN): <strong>{{ invoice.grn_number or 'Unsigned GRN' }}</strong></span>
+          {% if invoice.grn_number %}<span class="checklist-status-pass">&#10003; ACCEPTED</span>{% else %}<span class="checklist-status-fail">&times; PENDING</span>{% endif %}
+        </div>
+        <div class="checklist-item">
+          <span>Deemed Acceptance (Sec 2b): <strong>Day 15 Window</strong></span>
+          <span class="checklist-status-pass">&#10003; {{ clock.acceptance_type }}</span>
+        </div>
+      </div>
+
+      {% if anomalies %}
+      <div style="margin-top: 16px; background: #FFEBEE; border: 1px solid #C62828; padding: 12px;">
+        <strong style="color: #C62828; font-size: 12px; display: block; margin-bottom: 4px;">Potential Anomaly Detected:</strong>
+        <p style="font-size: 12px; color: #B71C1C;">{{ anomalies[0].evidence }}</p>
+        <p style="font-size: 11px; color: var(--color-ledger-dim); margin-top: 4px;">Action: {{ anomalies[0].suggested_verification_action }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Canonical Timeline Log -->
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">Canonical Event Timeline (Source of Truth)</h3>
+      
+      <div class="timeline-log">
+        {% for evt in invoice.events %}
+        <div class="timeline-entry">
+          <div class="timeline-date">{{ evt.event_date.strftime('%d %b %Y') }}</div>
+          <div class="timeline-title">{{ evt.event_type }}</div>
+          <div class="timeline-note">{{ evt.notes or 'Event logged via ' ~ evt.source }} (Confidence: {{ "{:.0f}%".format(evt.confidence * 100) }})</div>
+        </div>
+        {% else %}
+        <div style="font-size: 12px; color: var(--color-ledger-dim);">No canonical events recorded yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

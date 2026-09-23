@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Dashboard — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('dashboard', 'Executive Receivables & Cash-Flow Register') }}</h1>
+    <p class="page-meta">MSME: {{ current_tenant.business_name }} · Udyam: <span class="tabular-nums">{{ current_tenant.udyam_id }}</span> · As of: <span class="tabular-nums">{{ today.strftime('%d %B %Y') }}</span></p>
+  </div>
+  
+  <div style="display: flex; gap: 12px; align-items: center;">
+    <!-- One-Click Reset / Load Demo Scenario Button -->
+    <form method="POST" action="{{ url_for('load_demo_scenario') }}">
+      <button type="submit" class="btn btn-sm btn-primary">LOAD DEMO SCENARIO</button>
+    </form>
+    
+    <!-- Quick Invoice Ingestion Route -->
+    <a href="{{ url_for('invoices_list') }}" class="btn btn-sm">+ Ingest Documents</a>
+  </div>
+</div>
+
+<!-- Hero Headline Metrics Panel (Section 11 Guideline: Reserved for authority metrics) -->
+<div class="hero-grid">
+  <!-- Panel 1: Total Outstanding -->
+  <div class="hero-panel safe">
+    <div class="panel-label">Total Open Receivables</div>
+    <div class="panel-figure">₹{{ "{:,.1f}".format(total_outstanding / 100000.0) }}L</div>
+    <div class="panel-subtext"><span class="tabular-nums">{{ open_invoices_count }}</span> active invoices across <span class="tabular-nums">{{ active_buyers_count }}</span> buyers</div>
+  </div>
+
+  <!-- Panel 2: At-Risk Receivables -->
+  <div class="hero-panel danger">
+    <div class="panel-label">At-Risk Receivables (Delayed &gt; 15d)</div>
+    <div class="panel-figure">₹{{ "{:,.1f}".format(at_risk_amount / 100000.0) }}L</div>
+    <div class="panel-subtext"><span class="tabular-nums">{{ at_risk_count }}</span> invoices past contractual due dates</div>
+  </div>
+
+  <!-- Panel 3: Cash Survival Date -->
+  <div class="hero-panel {% if cashflow_res.cash_survival_days and cashflow_res.cash_survival_days < 30 %}danger{% else %}warning{% endif %}">
+    <div class="panel-label">{{ t('cash_survival_date', 'Cash Survival Date') }}</div>
+    <div class="panel-figure">
+      {% if cashflow_res.cash_survival_date %}
+        {{ cashflow_res.cash_survival_date.strftime('%d %b %Y') }}
+      {% else %}
+        &gt; 70 Days
+      {% endif %}
+    </div>
+    <div class="panel-subtext">Earliest date P(cash &lt; ₹5L) &ge; 60%</div>
+  </div>
+
+  <!-- Panel 4: Financing Need / Liquidity Gap Range -->
+  <div class="hero-panel warning">
+    <div class="panel-label">{{ t('funding_gap', 'Liquidity Gap Range') }}</div>
+    <div class="panel-figure" style="font-size: 20px; line-height: 1.3;">
+      {{ cashflow_res.liquidity_gap_text.split('—')[0] }}—{{ cashflow_res.liquidity_gap_text.split('—')[1] if '—' in cashflow_res.liquidity_gap_text else 'Nil' }}
+    </div>
+    <div class="panel-subtext">Potential financing need — review options</div>
+  </div>
+</div>
+
+<!-- Synthetic Data Disclosure Label (Strict Master Prompt Requirement) -->
+<div class="statutory-notice-box" style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <strong>System Benchmark Verification Notice:</strong>
+    <span>Synthetic benchmark demonstrates technical feasibility; real-world validation requires consented historical MSME data.</span>
+  </div>
+  <span class="stamp-badge badge-demo">DEMO / SANDBOX</span>
+</div>
+
+<!-- Two-Column Layout: Priority Action Register & Buyer Concentration -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 20px;">
+  <!-- Column 1: Today's Prioritized Interventions (OR-Tools) -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px;">Priority Recovery Interventions (OR-Tools Optimized)</h3>
+      <a href="{{ url_for('actions_view') }}" style="font-size: 12px; color: var(--color-institutional); text-decoration: none;">View War Room &rarr;</a>
+    </div>
+
+    <div class="ledger-table-wrap">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Buyer</th>
+            <th class="numeric">Outstanding</th>
+            <th>Recommended Action</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for action in priority_actions[:4] %}
+          <tr>
+            <td>
+              <a href="{{ url_for('invoice_detail', invoice_id=action.invoice_id) }}" style="font-weight: 600; color: var(--color-institutional); text-decoration: none;">
+                {{ action.invoice_number }}
+              </a>
+            </td>
+            <td>{{ action.buyer_name }}</td>
+            <td class="numeric">₹{{ "{:,.2f}".format(action.amount) }}</td>
+            <td>
+              <div><strong>{{ action.action_type }}</strong></div>
+              <div style="font-size: 11px; color: var(--color-ledger-dim);">{{ action.stage }}</div>
+            </td>
+            <td>
+              <span class="stamp-badge badge-pending">PENDING HUMAN APPROVAL</span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('approve_action_route', action_id=action.invoice_id) }}">
+                <button type="submit" class="btn btn-sm btn-primary">Approve</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--color-ledger-dim);">No pending actions scheduled. Run optimizer in Collection War Room.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Column 2: Concentration & Risk Alerts -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px;">Top Buyer Exposure</h3>
+      <a href="{{ url_for('buyer_graph_view') }}" style="font-size: 12px; color: var(--color-institutional); text-decoration: none;">Graph &rarr;</a>
+    </div>
+
+    <div class="ledger-table-wrap">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Buyer</th>
+            <th class="numeric">Outstanding</th>
+            <th>Share</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in top_buyers %}
+          <tr>
+            <td>
+              <a href="{{ url_for('buyer_dna_view', buyer_id=b.buyer_id) }}" style="color: var(--color-institutional); text-decoration: none; font-weight: 500;">
+                {{ b.canonical_name[:16] }}
+              </a>
+              {% if b.is_cpse %}<span style="font-size: 10px; color: #1B5E20; display: block;">CPSE</span>{% endif %}
+            </td>
+            <td class="numeric">₹{{ "{:,.1f}".format(b.outstanding / 100000.0) }}L</td>
+            <td class="numeric">{{ "{:.0f}%".format(b.share * 100) }}</td>
+            <td>
+              {% if b.share > 0.35 %}
+                <span class="stamp-badge badge-high-risk">CONCENTRATED</span>
+              {% elif b.is_cpse %}
+                <span class="stamp-badge badge-ready">TREDS READY</span>
+              {% else %}
+                <span class="stamp-badge badge-safe">SAFE</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 14px; margin-top: 16px;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">TReDS Liquidity Potential</div>
+      <p style="font-size: 12px; color: var(--color-ledger-dim);">
+        ₹{{ "{:,.1f}".format(treds_eligible_amount / 100000.0) }}L in CPSE receivables structurally meet TReDS platform requirements.
+      </p>
+      <div style="margin-top: 8px;">
+        <a href="{{ url_for('treds_view') }}" class="btn btn-sm">Review TReDS Checklist &rarr;</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

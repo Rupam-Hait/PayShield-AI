@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant & Voice Interface — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">Read-Only Financial Assistant & Voice Interface</h1>
+    <p class="page-meta">Grounded semantic query engine with prompt-injection defenses and mandatory confirmation for voice inputs</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge badge-safe">READ-ONLY REASONING LAYER</span>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+  <!-- Natural Language Query Terminal -->
+  <div>
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 24px; margin-bottom: 24px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 12px;">Query Portfolio Intelligence</h3>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 16px;">
+        Ask queries in English or Indian languages. Examples: <em>"Which receivables are overdue?"</em>, <em>"What is my cash runway?"</em>, <em>"Which invoices qualify for TReDS?"</em>
+      </p>
+
+      <form method="POST" action="{{ url_for('assistant_query') }}" style="display: flex; gap: 8px;">
+        <input type="text" name="query" placeholder="Enter inquiry regarding receivables, cashflow, or MSMED Act rules..." value="{{ query_text or '' }}" required>
+        <button type="submit" class="btn btn-primary" style="white-space: nowrap;">Query Ledger</button>
+      </form>
+    </div>
+
+    <!-- Query Response Card if available -->
+    {% if query_response %}
+    <div style="background: var(--color-paper-white); border: 2px solid var(--color-institutional); padding: 24px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-ruled-light); padding-bottom: 8px; margin-bottom: 12px;">
+        <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-ledger-dim);">Grounded System Finding</span>
+        <span class="stamp-badge badge-safe">{{ query_response.confidence }} CONFIDENCE</span>
+      </div>
+
+      <div style="font-family: var(--font-serif); font-size: 16px; color: var(--color-ledger-ink); line-height: 1.5; margin-bottom: 16px;">
+        {{ query_response.response }}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--color-ledger-dim); padding-top: 12px; border-top: 1px solid var(--color-ruled-light);">
+        <span>Source: <strong>{{ query_response.data_source }}</strong></span>
+        {% if query_response.action_link %}
+        <a href="{{ query_response.action_link }}" class="btn btn-sm btn-primary">Open Relevant Module &rarr;</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Voice Input Simulation Panel (Section 1 requirement) -->
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 24px;">
+      <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 8px;">Voice Interface Simulation</h3>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 16px;">
+        Voice/monetary input mandates an explicit confirmation step before executing any query or filter.
+      </p>
+
+      <form method="POST" action="{{ url_for('voice_simulate') }}" style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <input type="text" name="voice_text" placeholder="e.g. 'Show me delayed invoices for Delta Corp amount ₹42 Lakhs'" value="{{ voice_transcript or '' }}" required>
+        <button type="submit" class="btn">Simulate Speech Input</button>
+      </form>
+
+      {% if voice_data %}
+      <div style="background: #FDF6E2; border: 1.5px solid var(--color-brass); padding: 16px; margin-top: 16px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-brass); margin-bottom: 6px;">Mandatory Confirmation Step</div>
+        <p style="font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--color-ledger-ink); margin-bottom: 12px;">
+          {{ voice_data.confirmation_prompt }}
+        </p>
+
+        <div style="display: flex; gap: 8px;">
+          <form method="POST" action="{{ url_for('assistant_query') }}">
+            <input type="hidden" name="query" value="Show invoices for {{ voice_data.parsed_buyer }}">
+            <button type="submit" class="btn btn-primary btn-sm">[YES] Confirm &amp; Execute</button>
+          </form>
+          <a href="{{ url_for('assistant_view') }}" class="btn btn-sm">[EDIT] Re-enter</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Security & Prompt Injection Defense Guardrail Info -->
+  <div>
+    <div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 18px; margin-bottom: 16px;">
+      <h4 style="font-family: var(--font-serif); font-size: 15px; margin-bottom: 10px;">Prompt Injection Shield</h4>
+      <p style="font-size: 12px; color: var(--color-ledger-dim); line-height: 1.5; margin-bottom: 12px;">
+        All uploaded document content (including OCR text) is treated as untrusted input. The assistant operates strictly in read-only reasoning mode.
+      </p>
+      <ul style="font-size: 11px; color: var(--color-ledger-dim); padding-left: 16px; line-height: 1.6;">
+        <li>Cannot delete invoices</li>
+        <li>Cannot modify statutory rule versions</li>
+        <li>Cannot bypass human approval gateway</li>
+        <li>Sanitizes adversarial control tags</li>
+      </ul>
+    </div>
+
+    <div style="background: #F4F1EA; border: 1px solid var(--color-ruled-line); padding: 18px;">
+      <h4 style="font-family: var(--font-serif); font-size: 15px; margin-bottom: 8px;">Multilingual Support</h4>
+      <p style="font-size: 12px; color: var(--color-ledger-dim);">
+        Standardized terminology active for English, Hindi, Bengali, Tamil, Telugu, and Marathi.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

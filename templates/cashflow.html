@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}CashFlow Digital Twin — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('cashflow', 'CashFlow Digital Twin & Runway Simulation') }}</h1>
+    <p class="page-meta">Stochastic Monte Carlo forecasting (500 simulations) combining deterministic commitments and probabilistic receivables</p>
+  </div>
+  
+  <div>
+    <a href="{{ url_for('simulator_view') }}" class="btn btn-primary">Open Rescue Simulator &rarr;</a>
+  </div>
+</div>
+
+<!-- Key Digital Twin Headline Metrics -->
+<div class="hero-grid">
+  <div class="hero-panel safe">
+    <div class="panel-label">Starting Cash Balance</div>
+    <div class="panel-figure">₹{{ "{:,.2f}".format(cash_res.starting_cash) }}</div>
+    <div class="panel-subtext">Verified bank ledger balance</div>
+  </div>
+
+  <div class="hero-panel {% if cash_res.cash_survival_days and cash_res.cash_survival_days < 30 %}danger{% else %}warning{% endif %}">
+    <div class="panel-label">{{ t('cash_survival_date', 'Cash Survival Date') }}</div>
+    <div class="panel-figure">
+      {% if cash_res.cash_survival_date %}
+        {{ cash_res.cash_survival_date.strftime('%d %b %Y') }}
+      {% else %}
+        &gt; 70 Days
+      {% endif %}
+    </div>
+    <div class="panel-subtext">Earliest date P(cash &lt; ₹5L) &ge; 60% (Day {{ cash_res.cash_survival_days or '>70' }})</div>
+  </div>
+
+  <div class="hero-panel warning">
+    <div class="panel-label">{{ t('funding_gap', 'Liquidity Gap Range') }}</div>
+    <div class="panel-figure" style="font-size: 20px; line-height: 1.3;">
+      {{ cash_res.liquidity_gap_text }}
+    </div>
+    <div class="panel-subtext">Safety buffer floor: ₹{{ "{:,.0f}".format(cash_res.safety_threshold) }}</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Open Receivables Pipeline</div>
+    <div class="panel-figure">₹{{ "{:,.1f}".format(cash_res.total_open_receivables / 100000.0) }}L</div>
+    <div class="panel-subtext">Discountable on TReDS: ₹{{ "{:,.1f}".format(treds_eligible_amount / 100000.0) }}L</div>
+  </div>
+</div>
+
+<!-- Account Aggregator Pluggable Seam Notice (Section 8 requirement) -->
+<div class="statutory-notice-box" style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <strong>Account Aggregator (AA) Open Banking Integration:</strong>
+    <span>Consent-based financial data feed via Sahamati / RBI-regulated AA ecosystem. Pluggable connector initialized.</span>
+  </div>
+  <span class="stamp-badge badge-demo">SANDBOX CONNECTOR</span>
+</div>
+
+<!-- Monte Carlo Trajectory Projection Table -->
+<div style="margin-top: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 12px;">Monte Carlo Stochastic Cash Trajectory (10-Week Runway)</h3>
+  
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Projection Date</th>
+          <th>Timeline Horizon</th>
+          <th class="numeric">Conservative (P10)</th>
+          <th class="numeric">Median Expectation (P50)</th>
+          <th class="numeric">Favorable (P90)</th>
+          <th class="numeric">Safety Buffer</th>
+          <th>Runway Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pt in cash_res.trajectory_points %}
+        <tr>
+          <td class="tabular-nums"><strong>{{ pt.date }}</strong></td>
+          <td>Day +{{ pt.day_num }}</td>
+          <td class="numeric font-serif" style="color: {% if pt.p10_cash < pt.safety_threshold %}#C62828{% else %}#1B2430{% endif %};">
+            ₹{{ "{:,.0f}".format(pt.p10_cash) }}
+          </td>
+          <td class="numeric font-serif"><strong>₹{{ "{:,.0f}".format(pt.p50_cash) }}</strong></td>
+          <td class="numeric font-serif" style="color: #2E7D32;">₹{{ "{:,.0f}".format(pt.p90_cash) }}</td>
+          <td class="numeric font-serif" style="color: var(--color-ledger-dim);">₹{{ "{:,.0f}".format(pt.safety_threshold) }}</td>
+          <td>
+            {% if pt.p10_cash < pt.safety_threshold %}
+              <span class="stamp-badge badge-high-risk">DEFICIT RISK</span>
+            {% elif pt.p50_cash < (pt.safety_threshold * 1.5) %}
+              <span class="stamp-badge badge-watch">TIGHT BUFFER</span>
+            {% else %}
+              <span class="stamp-badge badge-safe">SAFE RUNWAY</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="disclaimer-text">
+    {{ cash_res.disclaimer }}
+  </p>
+</div>
+{% endblock %}

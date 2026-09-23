@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}TReDS Ecosystem Readiness — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('treds', 'TReDS Ecosystem Readiness Register') }}</h1>
+    <p class="page-meta">Structural suitability assessment for Trade Receivables Discounting System exchanges (RXIL, M1xchange, Invoicemart)</p>
+  </div>
+  
+  <div>
+    <!-- Invoice Selector Form -->
+    <form method="GET" action="{{ url_for('treds_view') }}" style="display: flex; gap: 8px;">
+      <select name="invoice_id" onchange="this.form.submit()" style="width: auto;">
+        {% for inv in open_invoices %}
+        <option value="{{ inv.invoice_id }}" {% if selected_invoice and selected_invoice.invoice_id == inv.invoice_id %}selected{% endif %}>
+          {{ inv.invoice_number }} — {{ inv.buyer.canonical_name[:18] }} (₹{{ "{:,.1f}".format(inv.amount/100000.0) }}L)
+        </option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-sm">Inspect</button></noscript>
+    </form>
+  </div>
+</div>
+
+{% if treds_eval %}
+<!-- Overall Readiness Banner -->
+<div style="background: var(--color-paper-white); border: 2px solid {% if treds_eval.is_ready %}#1B5E20{% else %}#455A64{% endif %}; padding: 20px; margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <div>
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-ledger-dim);">TReDS Workflow Verification Result</span>
+      <h2 style="font-family: var(--font-serif); font-size: 22px; color: var(--color-ledger-ink); margin-top: 4px;">
+        Invoice: {{ treds_eval.invoice_number }} &middot; Buyer: {{ treds_eval.buyer_name }}
+      </h2>
+    </div>
+    <div>
+      <span class="stamp-badge {% if treds_eval.is_ready %}badge-ready{% else %}badge-blocked{% endif %}" style="font-size: 14px; padding: 6px 14px;">
+        {{ treds_eval.status_badge }}
+      </span>
+    </div>
+  </div>
+
+  <div style="font-size: 13px; color: var(--color-ledger-ink); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-ruled-light);">
+    <strong>Evaluation Status:</strong> {{ treds_eval.overall_status }}
+  </div>
+</div>
+
+<!-- Itemized Pass/Fail Checklist -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">Structural Onboarding Checklist</h3>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Verification Requirement</th>
+          <th>Status</th>
+          <th>Observed Evidence & Policy Grounding</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in treds_eval.checklist %}
+        <tr>
+          <td><strong>{{ item.item }}</strong></td>
+          <td>
+            {% if item.status == 'PASS' %}
+              <span class="stamp-badge badge-ready">&#10003; PASS</span>
+            {% else %}
+              <span class="stamp-badge badge-blocked">&times; FAIL</span>
+            {% endif %}
+          </td>
+          <td style="font-size: 12px; color: var(--color-ledger-ink);">{{ item.details }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Legal & Product Integrity Disclaimer -->
+<div class="statutory-notice-box">
+  <strong>Product Integrity Statement:</strong>
+  <p class="disclaimer-text" style="margin-top: 4px; font-size: 12px; color: var(--color-ledger-dim);">
+    {{ treds_eval.disclaimer }}
+  </p>
+</div>
+
+<!-- Action Links -->
+<div style="display: flex; gap: 12px; margin-top: 20px;">
+  <a href="{{ url_for('evidence_dossier', invoice_id=treds_eval.invoice_id) }}" class="btn btn-primary">Generate Evidence Dossier for Exchange</a>
+  <a href="{{ url_for('invoice_detail', invoice_id=treds_eval.invoice_id) }}" class="btn">Return to Invoice Intelligence</a>
+</div>
+{% endif %}
+{% endblock %}

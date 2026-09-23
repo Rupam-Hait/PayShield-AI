@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy & Governance Center — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('governance', 'Privacy & Governance Control Center') }}</h1>
+    <p class="page-meta">Compliance with the Digital Personal Data Protection Act 2025 (DPDP Rules) & Tenant Isolation Policies</p>
+  </div>
+  
+  <div style="display: flex; gap: 8px;">
+    <!-- Data Principal Portability Export -->
+    <form method="POST" action="{{ url_for('export_tenant_data') }}">
+      <button type="submit" class="btn btn-sm">Export My Data (.JSON)</button>
+    </form>
+  </div>
+</div>
+
+<!-- Consent Management Ledger -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px;">
+    <h3 style="font-family: var(--font-serif); font-size: 18px;">DPDP 2025 Consent Ledger</h3>
+    <span style="font-size: 11px; color: var(--color-ledger-dim);">Notice Version: 2025.1</span>
+  </div>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Consent Purpose</th>
+          <th>Status</th>
+          <th>Granted Date</th>
+          <th>Revoked Date</th>
+          <th>Audit Hash</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in consents %}
+        <tr>
+          <td><strong>{{ c.purpose }}</strong></td>
+          <td>
+            {% if c.status == 'GRANTED' %}
+              <span class="stamp-badge badge-ready">&#10003; ACTIVE</span>
+            {% else %}
+              <span class="stamp-badge badge-blocked">REVOKED</span>
+            {% endif %}
+          </td>
+          <td class="tabular-nums">{{ c.granted_at.strftime('%d %b %Y, %H:%M') if c.granted_at else '—' }}</td>
+          <td class="tabular-nums">{{ c.revoked_at.strftime('%d %b %Y, %H:%M') if c.revoked_at else '—' }}</td>
+          <td><code style="font-size: 10px;">{{ c.consent_id[:16] }}...</code></td>
+          <td>
+            {% if c.status == 'GRANTED' %}
+              <form method="POST" action="{{ url_for('revoke_consent_route', consent_id=c.consent_id) }}">
+                <button type="submit" class="btn btn-sm btn-danger">Revoke Consent</button>
+              </form>
+            {% else %}
+              <form method="POST" action="{{ url_for('grant_consent_route', purpose=c.purpose) }}">
+                <button type="submit" class="btn btn-sm btn-primary">Re-Grant</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Immutable Audit Trail Register -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">Immutable System Audit Trail</h3>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Timestamp (UTC)</th>
+          <th>Action</th>
+          <th>Object Type</th>
+          <th>Object ID</th>
+          <th>State / Modifications</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in audit_logs %}
+        <tr>
+          <td class="tabular-nums" style="font-size: 11px;">{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') }}</td>
+          <td><strong>{{ log.action }}</strong></td>
+          <td>{{ log.object_type }}</td>
+          <td><code style="font-size: 10px;">{{ log.object_id }}</code></td>
+          <td style="font-size: 12px; color: var(--color-ledger-dim);">{{ log.after_state or log.before_state or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Data Deletion & Erasure Request (Right to Forgotten) -->
+<div style="background: #FFF3E0; border: 1.5px solid #E65100; padding: 20px;">
+  <h4 style="font-family: var(--font-serif); font-size: 16px; color: #E65100; margin-bottom: 8px;">Data Principal Right to Erasure / Deletion</h4>
+  <p style="font-size: 12px; color: var(--color-ledger-dim); margin-bottom: 12px;">
+    In accordance with Section 12 of the DPDP Act 2025, you may submit a verifiable erasure request for business records not subject to statutory tax retention periods (GST Act Section 36 mandates 72 months).
+  </p>
+  <form method="POST" action="{{ url_for('request_data_deletion') }}">
+    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to request data deletion?');">Submit DPDP Erasure Request</button>
+  </form>
+</div>
+{% endblock %}

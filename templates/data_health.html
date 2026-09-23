@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Data Health & Ingestion Completeness — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">Data Health &amp; Ingestion Completeness</h1>
+    <p class="page-meta">Verification of evidentiary depth, OCR quality distribution, and document reconciliation coverage</p>
+  </div>
+  
+  <div>
+    <span class="stamp-badge {% if completeness_pct >= 85 %}badge-safe{% else %}badge-watch{% endif %}">
+      COMPLETENESS: {{ completeness_pct }}%
+    </span>
+  </div>
+</div>
+
+<!-- Data Volume Headline Panels -->
+<div class="hero-grid">
+  <div class="hero-panel safe">
+    <div class="panel-label">Invoices Ingested</div>
+    <div class="panel-figure">{{ total_invoices }}</div>
+    <div class="panel-subtext">Tax invoices in canonical register</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Reconciled Payments</div>
+    <div class="panel-figure">{{ total_payments }}</div>
+    <div class="panel-subtext">Partial and full payment receipts</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Supporting Documents</div>
+    <div class="panel-figure">{{ total_documents }}</div>
+    <div class="panel-subtext">POs, GRNs, delivery challans, agreements</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Average OCR Confidence</div>
+    <div class="panel-figure">{{ avg_ocr_conf }}%</div>
+    <div class="panel-subtext">Extraction fidelity across files</div>
+  </div>
+</div>
+
+<!-- Completeness & Reconciliation Gap Breakdown -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-bottom: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 16px;">Reconciliation &amp; Missing Documentation Analysis</h3>
+
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Check Dimension</th>
+          <th>Coverage Rate</th>
+          <th>Impact on Predictive Engine</th>
+          <th>Recommended Operational Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Purchase Order (PO) Linkage</strong></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="font-serif font-bold">{{ po_coverage_pct }}%</span>
+              <div style="background: #E2E8F0; width: 100px; height: 6px;">
+                <div style="background: #2E7D32; width: {{ po_coverage_pct }}%; height: 100%;"></div>
+              </div>
+            </div>
+          </td>
+          <td>High — Required for TReDS factoring and buyer validation</td>
+          <td>Mandate buyer PO numbers during invoice generation</td>
+        </tr>
+        <tr>
+          <td><strong>Formal Acceptance / GRN Evidence</strong></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="font-serif font-bold">{{ grn_coverage_pct }}%</span>
+              <div style="background: #E2E8F0; width: 100px; height: 6px;">
+                <div style="background: #B78103; width: {{ grn_coverage_pct }}%; height: 100%;"></div>
+              </div>
+            </div>
+          </td>
+          <td>Critical — Triggers deemed acceptance clock (15 days under Sec 2b)</td>
+          <td>Collect stamped Goods Receipt Notes from buyer receiving docks</td>
+        </tr>
+        <tr>
+          <td><strong>Bank Feed / Payment Matching</strong></td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="font-serif font-bold">100%</span>
+              <div style="background: #E2E8F0; width: 100px; height: 6px;">
+                <div style="background: #2E7D32; width: 100%; height: 100%;"></div>
+              </div>
+            </div>
+          </td>
+          <td>High — Feeds Buyer Payment DNA and Lifelines survival curves</td>
+          <td>Maintain regular settlement transaction imports</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

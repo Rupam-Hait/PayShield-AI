@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Buyer Payment DNA — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('buyer_dna', 'Buyer Payment DNA & Behavioral Ledger') }}</h1>
+    <p class="page-meta">Behavioral history observed strictly from this MSME's consented historical transaction data</p>
+  </div>
+  
+  <div>
+    <!-- Buyer Selector Form -->
+    <form method="GET" action="{{ url_for('buyer_dna_view') }}" style="display: flex; gap: 8px;">
+      <select name="buyer_id" onchange="this.form.submit()" style="width: auto;">
+        {% for b in all_buyers %}
+        <option value="{{ b.buyer_id }}" {% if selected_buyer.buyer_id == b.buyer_id %}selected{% endif %}>
+          {{ b.canonical_name }} {% if b.is_cpse %}(CPSE){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-sm">Select</button></noscript>
+    </form>
+  </div>
+</div>
+
+<!-- Authority Display Summary Banner (Section 5 master format requirement) -->
+<div style="background: var(--color-paper-white); border: 2px solid var(--color-institutional); padding: 20px; margin-bottom: 24px;">
+  <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-ledger-dim); margin-bottom: 8px;">Consented Transaction Behavioral Profile</div>
+  <div style="font-family: var(--font-serif); font-size: 18px; color: var(--color-ledger-ink); line-height: 1.4;">
+    {{ dna.display_summary }}
+  </div>
+</div>
+
+<!-- Hero Metrics for Selected Buyer -->
+<div class="hero-grid">
+  <div class="hero-panel safe">
+    <div class="panel-label">Median Settlement Cycle</div>
+    <div class="panel-figure">
+      {% if dna.median_payment_days %}{{ dna.median_payment_days }} Days{% else %}Cohort Prior{% endif %}
+    </div>
+    <div class="panel-subtext">Contractual Term: <span class="tabular-nums">{{ dna.contractual_term }}</span> Days</div>
+  </div>
+
+  <div class="hero-panel {% if dna.typical_delay and dna.typical_delay > 15 %}danger{% elif dna.typical_delay and dna.typical_delay > 0 %}warning{% else %}safe{% endif %}">
+    <div class="panel-label">Typical Historical Delay</div>
+    <div class="panel-figure">
+      {% if dna.typical_delay is not none %}
+        {% if dna.typical_delay >= 0 %}+{{ dna.typical_delay }}{% else %}{{ dna.typical_delay }}{% endif %} Days
+      {% else %}
+        N/A
+      {% endif %}
+    </div>
+    <div class="panel-subtext">P90 Payment Time: <strong>{{ dna.p90_payment_days or 'N/A' }}</strong> Days</div>
+  </div>
+
+  <div class="hero-panel {% if dna.recent_trend == 'worsening' %}danger{% elif dna.recent_trend == 'improving' %}safe{% else %}warning{% endif %}">
+    <div class="panel-label">Recent Payment Trend</div>
+    <div class="panel-figure" style="text-transform: capitalize;">
+      {{ dna.recent_trend }}
+    </div>
+    <div class="panel-subtext">Variability (&sigma;): <span class="tabular-nums">&plusmn;{{ dna.payment_variability_std or 0 }}</span> days</div>
+  </div>
+
+  <div class="hero-panel safe">
+    <div class="panel-label">Prediction Confidence &amp; Depth</div>
+    <div class="panel-figure">{{ dna.confidence.capitalize() }}</div>
+    <div class="panel-subtext">Observed History: <span class="tabular-nums">{{ dna.history_depth }}</span> Invoices</div>
+  </div>
+</div>
+
+<!-- Cold Start / Abstention Callout if applicable -->
+{% if dna.is_cold_start %}
+<div class="statutory-notice-box" style="border-left-color: #546E7A;">
+  <strong>Cold-Start Behavior Active:</strong>
+  <span>{{ dna.message }} The platform refuses to invent a fabricated score for buyers with sparse records, relying instead on sector benchmarks.</span>
+</div>
+{% endif %}
+
+<!-- Open Invoices for This Buyer -->
+<div style="margin-top: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 18px; margin-bottom: 12px;">Active Open Invoices with {{ selected_buyer.canonical_name }}</h3>
+  
+  <div class="ledger-table-wrap">
+    <table class="ledger-table">
+      <thead>
+        <tr>
+          <th>Invoice No</th>
+          <th>Invoice Date</th>
+          <th>Contract Due Date</th>
+          <th>Statutory Due Date</th>
+          <th class="numeric">Amount</th>
+          <th class="numeric">Outstanding</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in buyer_invoices %}
+        <tr>
+          <td><a href="{{ url_for('invoice_detail', invoice_id=inv.invoice_id) }}" style="font-weight: 700; color: var(--color-institutional); text-decoration: none;">{{ inv.invoice_number }}</a></td>
+          <td class="tabular-nums">{{ inv.invoice_date.strftime('%d %b %Y') }}</td>
+          <td class="tabular-nums">{{ inv.contract_due_date.strftime('%d %b %Y') }}</td>
+          <td class="tabular-nums">{{ inv.statutory_due_date.strftime('%d %b %Y') }}</td>
+          <td class="numeric">₹{{ "{:,.2f}".format(inv.amount) }}</td>
+          <td class="numeric"><strong>₹{{ "{:,.2f}".format(inv.outstanding_amount) }}</strong></td>
+          <td>
+            <span class="stamp-badge {% if inv.status == 'OVERDUE' %}badge-high-risk{% elif inv.status == 'PAID' %}badge-ready{% else %}badge-watch{% endif %}">
+              {{ inv.status }}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('invoice_detail', invoice_id=inv.invoice_id) }}" class="btn btn-sm">Inspect</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--color-ledger-dim);">No open invoices recorded for this buyer.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

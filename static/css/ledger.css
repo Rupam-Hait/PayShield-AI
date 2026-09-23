@@ -1,0 +1,491 @@
+/* ==========================================================================
+   PayShield AI — Paper & Ink Visual Design System (Strictly No-JavaScript)
+   Verifiable Financial Ledger & Evidence Register Aesthetic
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Bengali:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&family=Noto+Sans+Telugu:wght@400;600&display=swap');
+
+:root {
+  --color-ledger-ink: #1B2430;
+  --color-ledger-dim: #4A5568;
+  --color-paper-bg: #F7F5F0;
+  --color-paper-white: #FFFFFF;
+  --color-ruled-line: #D8D4CA;
+  --color-ruled-light: #ECE8DE;
+  
+  --color-institutional: #2E4057;
+  --color-institutional-hover: #1D2A3A;
+  --color-brass: #8A6D3B;
+  --color-brass-light: #FDF6E2;
+  
+  /* Semantic Status Palette */
+  --status-safe-border: #2E7D32;
+  --status-safe-bg: #E8F5E9;
+  --status-watch-border: #B78103;
+  --status-watch-bg: #FFF8E1;
+  --status-high-risk-border: #C62828;
+  --status-high-risk-bg: #FFEBEE;
+  --status-blocked-border: #455A64;
+  --status-blocked-bg: #ECEFF1;
+  --status-ready-border: #1B5E20;
+  --status-ready-bg: #E8F5E9;
+  --status-insufficient-border: #78909C;
+  --status-insufficient-bg: #ECEFF1;
+  --status-demo-border: #E65100;
+  --status-demo-bg: #FFF3E0;
+  
+  --font-serif: 'Source Serif 4', Georgia, 'Noto Serif Devanagari', 'Noto Serif Bengali', serif;
+  --font-grotesque: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-paper-bg);
+  color: var(--color-ledger-ink);
+  font-family: var(--font-grotesque);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular Lining Figures for Numbers, Dates, Amounts */
+.tabular-nums, .num, .amount, .date, .currency, table td.numeric, th.numeric {
+  font-family: var(--font-serif);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Master Header & Navigation */
+.ledger-header {
+  background-color: var(--color-institutional);
+  color: var(--color-paper-bg);
+  border-bottom: 2px solid var(--color-ledger-ink);
+  padding: 12px 24px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.brand-section {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFFFFF;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.brand-subtitle {
+  font-size: 11px;
+  color: #CBD5E1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tenant-badge {
+  font-size: 12px;
+  background: rgba(255,255,255,0.1);
+  padding: 4px 10px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 2px;
+}
+
+.nav-strip {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.nav-link {
+  color: #E2E8F0;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 6px;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #FFFFFF;
+  border-bottom-color: #E2B93B;
+}
+
+/* Main Layout Canvas */
+.ledger-container {
+  max-width: 1360px;
+  margin: 24px auto;
+  padding: 0 20px;
+}
+
+/* Page Title Strip */
+.page-title-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid var(--color-ledger-ink);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-ledger-ink);
+}
+
+.page-meta {
+  font-size: 12px;
+  color: var(--color-ledger-dim);
+}
+
+/* Stamp Badges (Not pill chips) */
+.stamp-badge {
+  display: inline-block;
+  font-family: var(--font-grotesque);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border: 1.5px solid;
+  border-radius: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.badge-safe {
+  border-color: var(--status-safe-border);
+  color: var(--status-safe-border);
+  background-color: var(--status-safe-bg);
+}
+
+.badge-watch {
+  border-color: var(--status-watch-border);
+  color: var(--status-watch-border);
+  background-color: var(--status-watch-bg);
+}
+
+.badge-high-risk {
+  border-color: var(--status-high-risk-border);
+  color: var(--status-high-risk-border);
+  background-color: var(--status-high-risk-bg);
+}
+
+.badge-blocked {
+  border-color: var(--status-blocked-border);
+  color: var(--status-blocked-border);
+  background-color: var(--status-blocked-bg);
+}
+
+.badge-ready {
+  border-color: var(--status-ready-border);
+  color: var(--status-ready-border);
+  background-color: var(--status-ready-bg);
+}
+
+.badge-insufficient {
+  border-color: var(--status-insufficient-border);
+  color: var(--status-insufficient-border);
+  background-color: var(--status-insufficient-bg);
+}
+
+.badge-demo {
+  border-color: var(--status-demo-border);
+  color: var(--status-demo-border);
+  background-color: var(--status-demo-bg);
+}
+
+.badge-pending {
+  border-color: var(--color-brass);
+  color: var(--color-brass);
+  background-color: var(--color-brass-light);
+}
+
+/* Ledger Register Table Layout */
+.ledger-table-wrap {
+  background: var(--color-paper-white);
+  border: 1px solid var(--color-ruled-line);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  margin-bottom: 24px;
+}
+
+table.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+table.ledger-table th {
+  background-color: #F0EDE5;
+  color: var(--color-ledger-ink);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--color-ruled-line);
+  border-right: 1px solid var(--color-ruled-light);
+}
+
+table.ledger-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-ruled-light);
+  border-right: 1px solid var(--color-ruled-light);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+table.ledger-table tr:hover {
+  background-color: #FAF8F4;
+}
+
+table.ledger-table td.numeric, table.ledger-table th.numeric {
+  text-align: right;
+}
+
+/* Hero Record Panels (Only for core metrics) */
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.hero-panel {
+  background: var(--color-paper-white);
+  border: 1px solid var(--color-ruled-line);
+  border-top: 3px solid var(--color-institutional);
+  padding: 16px 20px;
+}
+
+.hero-panel.warning {
+  border-top-color: var(--status-watch-border);
+}
+
+.hero-panel.danger {
+  border-top-color: var(--status-high-risk-border);
+}
+
+.hero-panel.safe {
+  border-top-color: var(--status-safe-border);
+}
+
+.panel-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-ledger-dim);
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.panel-figure {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-ledger-ink);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.panel-subtext {
+  font-size: 11px;
+  color: var(--color-ledger-dim);
+}
+
+/* Buttons and Form Controls */
+.btn {
+  font-family: var(--font-grotesque);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1.5px solid var(--color-ledger-ink);
+  background: var(--color-paper-white);
+  color: var(--color-ledger-ink);
+  cursor: pointer;
+  border-radius: 2px;
+  text-decoration: none;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.btn:hover {
+  background: var(--color-ledger-ink);
+  color: #FFFFFF;
+}
+
+.btn-primary {
+  background: var(--color-institutional);
+  border-color: var(--color-institutional);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background: var(--color-institutional-hover);
+  border-color: var(--color-institutional-hover);
+}
+
+.btn-danger {
+  background: var(--status-high-risk-bg);
+  border-color: var(--status-high-risk-border);
+  color: var(--status-high-risk-border);
+}
+
+.btn-danger:hover {
+  background: var(--status-high-risk-border);
+  color: #FFFFFF;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* Form inputs */
+input[type="text"], input[type="number"], select, textarea {
+  font-family: var(--font-grotesque);
+  font-size: 13px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-ruled-line);
+  background: #FFFFFF;
+  color: var(--color-ledger-ink);
+  border-radius: 2px;
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--color-institutional);
+  border-color: var(--color-institutional);
+}
+
+/* Timeline Evidence Log */
+.timeline-log {
+  border-left: 2px solid var(--color-institutional);
+  margin-left: 12px;
+  padding-left: 18px;
+}
+
+.timeline-entry {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.timeline-entry::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-paper-white);
+  border: 2px solid var(--color-institutional);
+  border-radius: 50%;
+}
+
+.timeline-date {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ledger-dim);
+}
+
+.timeline-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ledger-ink);
+}
+
+.timeline-note {
+  font-size: 12px;
+  color: var(--color-ledger-dim);
+}
+
+/* Checklist items (Pass/Fail) */
+.checklist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-ruled-light);
+}
+
+.checklist-status-pass {
+  color: var(--status-safe-border);
+  font-weight: 700;
+}
+
+.checklist-status-fail {
+  color: var(--status-high-risk-border);
+  font-weight: 700;
+}
+
+/* Notice & Disclaimer Box */
+.statutory-notice-box {
+  background: #F4F1EA;
+  border-left: 4px solid var(--color-institutional);
+  padding: 12px 16px;
+  margin: 16px 0;
+  font-size: 12px;
+  color: var(--color-ledger-dim);
+}
+
+.disclaimer-text {
+  font-size: 11px;
+  color: #64748B;
+  font-style: italic;
+  margin-top: 12px;
+}
+
+/* Flash Messages */
+.flash-message {
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.flash-success {
+  background: #E8F5E9;
+  border-color: #2E7D32;
+  color: #1B5E20;
+}
+
+.flash-error {
+  background: #FFEBEE;
+  border-color: #C62828;
+  color: #B71C1C;
+}
+
+.flash-info {
+  background: #E3F2FD;
+  border-color: #1565C0;
+  color: #0D47A1;
+}
+
+/* SVG Graph Canvas */
+.ledger-graph-svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-ruled-line);
+  background: #FFFFFF;
+}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Collection War Room & Action Intelligence — PayShield AI{% endblock %}
+
+{% block content %}
+<div class="page-title-strip">
+  <div>
+    <h1 class="page-title">{{ t('actions', 'Collection War Room & Action Intelligence') }}</h1>
+    <p class="page-meta">Daily intervention schedule prioritized via Google OR-Tools integer programming under team capacity limits</p>
+  </div>
+  
+  <div>
+    <!-- Escalation Strategy Selector -->
+    <form method="GET" action="{{ url_for('actions_view') }}" style="display: flex; gap: 8px; align-items: center;">
+      <span style="font-size: 11px; font-weight: 700; text-transform: uppercase;">Policy Mode:</span>
+      <select name="profile" onchange="this.form.submit()" style="width: auto;">
+        <option value="CONSERVATIVE" {% if current_profile == 'CONSERVATIVE' %}selected{% endif %}>Conservative (Preserve Relationship)</option>
+        <option value="BALANCED" {% if current_profile == 'BALANCED' %}selected{% endif %}>Balanced (Standard Staging)</option>
+        <option value="AGGRESSIVE" {% if current_profile == 'AGGRESSIVE' %}selected{% endif %}>Aggressive (Fast Recovery Focus)</option>
+      </select>
+      <noscript><button type="submit" class="btn btn-sm">Set</button></noscript>
+    </form>
+  </div>
+</div>
+
+<!-- Human Approval Gateway Mandatory Policy Banner -->
+<div class="statutory-notice-box" style="display: flex; justify-content: space-between; align-items: center; border-left-color: var(--color-brass);">
+  <div>
+    <strong>Human Approval Gateway Enforced:</strong>
+    <span>No external communication, legal notice, or portal submission executes automatically. Every action requires explicit human verification and authorization.</span>
+  </div>
+  <span class="stamp-badge badge-pending">HUMAN IN THE LOOP</span>
+</div>
+
+<!-- Prioritized Action Portfolio Table -->
+<div class="ledger-table-wrap">
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>Priority</th>
+        <th>Invoice</th>
+        <th>Buyer</th>
+        <th class="numeric">Outstanding</th>
+        <th>Workflow Stage</th>
+        <th>Recommended Action</th>
+        <th>Channel</th>
+        <th>Approval State</th>
+        <th>Execution</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for act in actions %}
+      <tr>
+        <td>
+          <span style="font-family: var(--font-serif); font-size: 16px; font-weight: 700;">#{{ loop.index }}</span>
+        </td>
+        <td>
+          <a href="{{ url_for('invoice_detail', invoice_id=act.invoice_id) }}" style="font-weight: 700; color: var(--color-institutional); text-decoration: none;">
+            {{ act.invoice_number }}
+          </a>
+        </td>
+        <td><strong>{{ act.buyer_name }}</strong></td>
+        <td class="numeric font-serif">₹{{ "{:,.2f}".format(act.amount) }}</td>
+        <td>
+          <span style="font-size: 12px; font-weight: 600;">{{ act.stage }}</span>
+        </td>
+        <td>
+          <div><strong>{{ act.action_type }}</strong></div>
+          <div style="font-size: 11px; color: var(--color-ledger-dim); max-width: 280px;">{{ act.reason }}</div>
+        </td>
+        <td>
+          <span class="stamp-badge badge-safe">{{ act.channel }}</span>
+        </td>
+        <td>
+          {% if act.existing_action and act.existing_action.status == 'APPROVED' %}
+            <span class="stamp-badge badge-ready">&#10003; APPROVED</span>
+            <div style="font-size: 10px; color: var(--color-ledger-dim); margin-top: 2px;">Ready to Send</div>
+          {% elif act.existing_action and act.existing_action.status == 'EXECUTED' %}
+            <span class="stamp-badge badge-safe">EXECUTED</span>
+          {% else %}
+            <span class="stamp-badge badge-pending">PENDING APPROVAL</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if act.existing_action and act.existing_action.status == 'APPROVED' %}
+            <!-- Outcome Feedback Recording Form -->
+            <form method="POST" action="{{ url_for('record_outcome_route', action_id=act.existing_action.action_id) }}" style="display: flex; gap: 4px;">
+              <select name="outcome" style="padding: 2px 4px; font-size: 11px; width: auto;">
+                <option value="PAYMENT_RECEIVED">Payment Received</option>
+                <option value="PROMISE_TO_PAY">Promise to Pay</option>
+                <option value="DISPUTED">Commercial Dispute</option>
+              </select>
+              <button type="submit" class="btn btn-sm btn-primary">Log Result</button>
+            </form>
+          {% elif act.existing_action and act.existing_action.status == 'EXECUTED' %}
+            <span style="font-size: 11px; color: #1B5E20; font-weight: 600;">{{ act.existing_action.outcome }}</span>
+          {% else %}
+            <!-- Approve Button Form -->
+            <form method="POST" action="{{ url_for('approve_action_route', action_id=act.invoice_id) }}">
+              <button type="submit" class="btn btn-sm btn-primary">Authorize Action</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" style="text-align: center; color: var(--color-ledger-dim);">No pending interventions require optimization today.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Relationship Preserving Escalation Stages Guide -->
+<div style="background: var(--color-paper-white); border: 1px solid var(--color-ruled-line); padding: 20px; margin-top: 24px;">
+  <h3 style="font-family: var(--font-serif); font-size: 16px; margin-bottom: 12px;">Relationship-Preserving 5-Stage Protocol</h3>
+  
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; font-size: 11px;">
+    <div style="border: 1px solid var(--color-ruled-light); padding: 10px;">
+      <strong>Stage 1: Verification</strong>
+      <p style="color: var(--color-ledger-dim); margin-top: 4px;">Confirm receipt of goods and internal bill registration.</p>
+    </div>
+    <div style="border: 1px solid var(--color-ruled-light); padding: 10px;">
+      <strong>Stage 2: Courteous Reminder</strong>
+      <p style="color: var(--color-ledger-dim); margin-top: 4px;">Friendly ledger reconciliation and maturity notification.</p>
+    </div>
+    <div style="border: 1px solid var(--color-ruled-light); padding: 10px;">
+      <strong>Stage 3: Finance Outreach</strong>
+      <p style="color: var(--color-ledger-dim); margin-top: 4px;">Direct call to Buyer Payables Head / CFO.</p>
+    </div>
+    <div style="border: 1px solid var(--color-ruled-light); padding: 10px;">
+      <strong>Stage 4: TReDS Auction</strong>
+      <p style="color: var(--color-ledger-dim); margin-top: 4px;">Competitive bidding for CPSE receivables to unlock immediate cash.</p>
+    </div>
+    <div style="border: 1px solid var(--color-ruled-light); padding: 10px; background: #FFEBEE;">
+      <strong style="color: #C62828;">Stage 5: Statutory Notice</strong>
+      <p style="color: #B71C1C; margin-top: 4px;">Section 18 demand notice with statutory interest claim.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
